@@ -191,7 +191,7 @@ pub async fn preparer_index_mongodb_custom<M>(middleware: &M) -> Result<(), Stri
         unique: true
     };
     let champs_index_applications = vec!(
-        ChampIndex {nom_champ: String::from("app_id"), direction: 1},
+        ChampIndex {nom_champ: String::from(CHAMP_APPLICATION_ID), direction: 1},
     );
     middleware.create_index(
         middleware,
