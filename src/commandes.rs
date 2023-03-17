@@ -39,67 +39,43 @@ pub async fn consommer_commande<M>(middleware: &M, m: MessageValideAction, gesti
         }?;
     }
 
-    todo!("fix me")
-    // match m.action.as_str() {
-    //     // Commandes
-    //
-    //     // Transactions
-    //     TRANSACTION_SAUVEGARDER_CATEGORIE_USAGER => commande_sauvegader_categorie(middleware, m, gestionnaire).await,
-    //     TRANSACTION_SAUVEGARDER_GROUPE_USAGER => commande_sauvegader_groupe(middleware, m, gestionnaire).await,
-    //     TRANSACTION_SAUVEGARDER_DOCUMENT => commande_sauvegader_document(middleware, m, gestionnaire).await,
-    //
-    //     // Commandes inconnues
-    //     _ => Err(format!("core_backup.consommer_commande: Commande {} inconnue : {}, message dropped", DOMAINE_NOM, m.action))?,
-    // }
+    match m.action.as_str() {
+        // Commandes
+
+        // Transactions
+        TRANSACTION_CREER_NOUVELLE_APPLICATION => commande_creer_nouvelle_application(middleware, m, gestionnaire).await,
+
+        // Commandes inconnues
+        _ => Err(format!("core_backup.consommer_commande: Commande {} inconnue : {}, message dropped", DOMAINE_NOM, m.action))?,
+    }
 }
 
-// async fn commande_sauvegader_categorie<M>(middleware: &M, m: MessageValideAction, gestionnaire: &GestionnaireLanding)
-//     -> Result<Option<MessageMilleGrille>, Box<dyn Error>>
-//     where M: GenerateurMessages + MongoDao + ValidateurX509
-// {
-//     debug!("commande_sauvegader_categorie Consommer commande : {:?}", & m.message);
-//     let commande: TransactionSauvegarderCategorieUsager = m.message.get_msg().map_contenu(None)?;
-//
-//     let user_id = match m.get_user_id() {
-//         Some(inner) => inner,
-//         None => Err(format!("commande_sauvegader_categorie User_id absent du certificat"))?
-//     };
-//
-//     // Autorisation: Action usager avec compte prive ou delegation globale
-//     let role_prive = m.verifier_roles(vec![RolesCertificats::ComptePrive]);
-//     if role_prive {
-//         // Ok
-//     } else if m.verifier_delegation_globale(DELEGATION_GLOBALE_PROPRIETAIRE) {
-//         // Ok
-//     } else {
-//         Err(format!("commandes.commande_sauvegader_categorie: Commande autorisation invalide pour message {:?}", m.correlation_id))?
-//     }
-//
-//     // S'assurer qu'il n'y a pas de conflit de version pour la categorie
-//     if let Some(categorie_id) = &commande.categorie_id {
-//         match commande.version {
-//             Some(version) => {
-//                 // Si la categorie existe, s'assure que la version est anterieure.
-//                 // Note : pour une categorie qui n'est pas connue, on accepte n'importe quelle version initiale
-//                 let filtre = doc! { "categorie_id": categorie_id, "user_id": &user_id };
-//                 let collection = middleware.get_collection(NOM_COLLECTION_CATEGORIES_USAGERS)?;
-//                 let doc_categorie_option = collection.find_one(filtre, None).await?;
-//                 if let Some(categorie) = doc_categorie_option {
-//                     let categorie: DocCategorieUsager = convertir_bson_deserializable(categorie)?;
-//                     if categorie.version >= version {
-//                         let reponse = json!({"ok": false, "err": "Version categorie existe deja"});
-//                         return Ok(Some(middleware.formatter_reponse(&reponse, None)?));
-//                     }
-//                 }
-//             },
-//             None => Err(format!("commandes.commande_sauvegader_categorie Categorie_id present sans version"))?
-//         }
-//     }
-//
-//     // Traiter la transaction
-//     Ok(sauvegarder_traiter_transaction(middleware, m, gestionnaire).await?)
-// }
-//
+async fn commande_creer_nouvelle_application<M>(middleware: &M, m: MessageValideAction, gestionnaire: &GestionnaireLanding)
+    -> Result<Option<MessageMilleGrille>, Box<dyn Error>>
+    where M: GenerateurMessages + MongoDao + ValidateurX509
+{
+    debug!("commande_creer_nouvelle_application Consommer commande : {:?}", & m.message);
+    let commande: TransactionCreerNouvelleApplication = m.message.get_msg().map_contenu(None)?;
+
+    let user_id = match m.get_user_id() {
+        Some(inner) => inner,
+        None => Err(format!("commande_creer_nouvelle_application User_id absent du certificat"))?
+    };
+
+    // Autorisation: Action usager avec compte prive ou delegation globale
+    let role_prive = m.verifier_roles(vec![RolesCertificats::ComptePrive]);
+    if role_prive {
+        // Ok
+    } else if m.verifier_delegation_globale(DELEGATION_GLOBALE_PROPRIETAIRE) {
+        // Ok
+    } else {
+        Err(format!("commandes.commande_creer_nouvelle_application: Commande autorisation invalide pour message {:?}", m.correlation_id))?
+    }
+
+    // Traiter la transaction
+    Ok(sauvegarder_traiter_transaction(middleware, m, gestionnaire).await?)
+}
+
 // async fn commande_sauvegader_groupe<M>(middleware: &M, m: MessageValideAction, gestionnaire: &GestionnaireLanding)
 //     -> Result<Option<MessageMilleGrille>, Box<dyn Error>>
 //     where M: GenerateurMessages + MongoDao + ValidateurX509

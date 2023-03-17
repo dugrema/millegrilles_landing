@@ -123,11 +123,10 @@ impl GestionnaireDomaine for GestionnaireLanding {
 
 pub fn preparer_queues() -> Vec<QueueType> {
     let mut rk_volatils = Vec::new();
-    //let mut rk_sauvegarder_cle = Vec::new();
 
     // RK 2.prive
     let requetes_privees: Vec<&str> = vec![
-        // REQUETE_CATEGORIES_USAGER,
+        REQUETE_LISTE_APPLICATIONS,
     ];
     for req in requetes_privees {
         rk_volatils.push(ConfigRoutingExchange {routing_key: format!("requete.{}.{}", DOMAINE_NOM, req), exchange: Securite::L2Prive});
@@ -135,7 +134,7 @@ pub fn preparer_queues() -> Vec<QueueType> {
 
     let commandes_privees: Vec<&str> = vec![
         // Transactions
-        // TRANSACTION_SAUVEGARDER_CATEGORIE_USAGER,
+        TRANSACTION_CREER_NOUVELLE_APPLICATION,
     ];
     for cmd in commandes_privees {
         rk_volatils.push(ConfigRoutingExchange {routing_key: format!("commande.{}.{}", DOMAINE_NOM, cmd), exchange: Securite::L2Prive});
@@ -156,7 +155,7 @@ pub fn preparer_queues() -> Vec<QueueType> {
 
     let mut rk_transactions = Vec::new();
     let transactions_secures: Vec<&str> = vec![
-
+        TRANSACTION_CREER_NOUVELLE_APPLICATION,
     ];
     for ts in transactions_secures {
         rk_transactions.push(ConfigRoutingExchange {

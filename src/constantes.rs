@@ -6,11 +6,11 @@ pub const NOM_Q_TRANSACTIONS: &str = "Landing/transactions";
 pub const NOM_Q_VOLATILS: &str = "Landing/volatils";
 pub const NOM_Q_TRIGGERS: &str = "Landing/triggers";
 
-// pub const TRANSACTION_SAUVEGARDER_CATEGORIE_USAGER: &str = "sauvegarderCategorieUsager";
+pub const TRANSACTION_CREER_NOUVELLE_APPLICATION: &str = "creerNouvelleApplication";
 // pub const TRANSACTION_SAUVEGARDER_GROUPE_USAGER: &str = "sauvegarderGroupeUsager";
 // pub const TRANSACTION_SAUVEGARDER_DOCUMENT: &str = "sauvegarderDocument";
 
-// pub const REQUETE_CATEGORIES_USAGER: &str = "getCategoriesUsager";
-// pub const REQUETE_GROUPES_USAGER: &str = "getGroupesUsager";
-// pub const REQUETE_GROUPES_CLES: &str = "getClesGroupes";
-// pub const REQUETE_DOCUMENTS_GROUPE: &str = "getDocumentsGroupe";
+pub const REQUETE_LISTE_APPLICATIONS: &str = "getListeApplications";
+
+pub const CHAMP_USER_ID: &str = "user_id";
+pub const CHAMP_APPLICATION_ID: &str = "application_id";
