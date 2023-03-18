@@ -12,6 +12,15 @@ pub struct TransactionCreerNouvelleApplication {
 pub struct DocApplication {
     pub user_id: String,
     pub application_id: String,
+    pub nom: Option<String>,
+    pub actif: Option<bool>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TransactionSauvegarderApplication {
+    pub application_id: String,
+    pub nom: Option<String>,
+    pub actif: Option<bool>,
 }
 
 // /// Champ d'une categorie

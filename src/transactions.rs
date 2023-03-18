@@ -26,6 +26,7 @@ pub async fn aiguillage_transaction<M, T>(gestionnaire: &GestionnaireLanding, mi
 {
     match transaction.get_action() {
         TRANSACTION_CREER_NOUVELLE_APPLICATION => transaction_creer_nouvelle_application(gestionnaire, middleware, transaction).await,
+        TRANSACTION_SAUVEGARDER_APPLICATION => transaction_sauvegarder_application(gestionnaire, middleware, transaction).await,
         _ => Err(format!("transactions.aiguillage_transaction: Transaction {} est de type non gere : {}", transaction.get_uuid_transaction(), transaction.get_action())),
     }
 }
@@ -71,6 +72,68 @@ async fn transaction_creer_nouvelle_application<M,T>(gestionnaire: &Gestionnaire
     let filtre = doc! { CHAMP_APPLICATION_ID: &uuid_transaction };
 
     let ops = doc! {
+        "$set": {
+            "actif": false,
+        },
+        "$setOnInsert": {
+            CHAMP_APPLICATION_ID: &uuid_transaction,
+            CHAMP_USER_ID: &user_id,
+            CHAMP_CREATION: Utc::now()
+        },
+        "$currentDate": {
+            CHAMP_MODIFICATION: true,
+        }
+    };
+
+    let collection = middleware.get_collection(NOM_COLLECTION_APPLICATIONS)?;
+    let options = UpdateOptions::builder()
+        .upsert(true)
+        .build();
+    if let Err(e) = collection.update_one(filtre, ops, options).await {
+        Err(format!("Erreur insertion/update application_id {} : {:?}", uuid_transaction, e))?
+    }
+
+    let reponse = json!({ "ok": true, "application_id": &uuid_transaction });
+
+    match middleware.formatter_reponse(reponse, None) {
+        Ok(r) => Ok(Some(r)),
+        Err(e) => Err(format!("transactions.transaction_sauvegarder_categorie_usager Erreur preparation confirmat envoi message {} : {:?}", uuid_transaction, e))
+    }
+}
+
+async fn transaction_sauvegarder_application<M,T>(gestionnaire: &GestionnaireLanding, middleware: &M, transaction: T)
+    -> Result<Option<MessageMilleGrille>, String>
+    where
+        M: GenerateurMessages + MongoDao,
+        T: Transaction
+{
+    debug!("transaction_sauvegarder_categorie_usager Consommer transaction : {:?}", &transaction);
+    let uuid_transaction = transaction.get_uuid_transaction().to_owned();
+    let user_id = match transaction.get_enveloppe_certificat() {
+        Some(e) => match e.get_user_id()? {
+            Some(inner) => inner.to_owned(),
+            None => Err(format!("transactions.transaction_sauvegarder_categorie_usager User_id absent du certificat (cert)"))?
+        },
+        None => Err(format!("transactions.transaction_sauvegarder_categorie_usager User_id absent du certificat (enveloppe)"))?
+    };
+
+    let transaction_application: TransactionSauvegarderApplication = match transaction.convertir() {
+        Ok(t) => t,
+        Err(e) => Err(format!("transactions.transaction_sauvegarder_groupe_usager Erreur conversion transaction : {:?}", e))?
+    };
+
+    let filtre = doc! { CHAMP_APPLICATION_ID: &transaction_application.application_id, CHAMP_USER_ID: &user_id };
+
+    let actif = match transaction_application.actif.as_ref() {
+        Some(b) => b.to_owned(),
+        None => false
+    };
+
+    let ops = doc! {
+        "$set": {
+            "nom": transaction_application.nom.as_ref(),
+            "actif": actif,
+        },
         "$setOnInsert": {
             CHAMP_APPLICATION_ID: &uuid_transaction,
             CHAMP_USER_ID: &user_id,

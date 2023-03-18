@@ -127,6 +127,7 @@ pub fn preparer_queues() -> Vec<QueueType> {
     // RK 2.prive
     let requetes_privees: Vec<&str> = vec![
         REQUETE_LISTE_APPLICATIONS,
+        REQUETE_APPLICATION,
     ];
     for req in requetes_privees {
         rk_volatils.push(ConfigRoutingExchange {routing_key: format!("requete.{}.{}", DOMAINE_NOM, req), exchange: Securite::L2Prive});
@@ -135,6 +136,7 @@ pub fn preparer_queues() -> Vec<QueueType> {
     let commandes_privees: Vec<&str> = vec![
         // Transactions
         TRANSACTION_CREER_NOUVELLE_APPLICATION,
+        TRANSACTION_SAUVEGARDER_APPLICATION,
     ];
     for cmd in commandes_privees {
         rk_volatils.push(ConfigRoutingExchange {routing_key: format!("commande.{}.{}", DOMAINE_NOM, cmd), exchange: Securite::L2Prive});
@@ -156,6 +158,7 @@ pub fn preparer_queues() -> Vec<QueueType> {
     let mut rk_transactions = Vec::new();
     let transactions_secures: Vec<&str> = vec![
         TRANSACTION_CREER_NOUVELLE_APPLICATION,
+        TRANSACTION_SAUVEGARDER_APPLICATION,
     ];
     for ts in transactions_secures {
         rk_transactions.push(ConfigRoutingExchange {

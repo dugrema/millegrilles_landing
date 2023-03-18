@@ -40,6 +40,7 @@ pub async fn consommer_requete<M>(middleware: &M, message: MessageValideAction, 
         DOMAINE_NOM => {
             match message.action.as_str() {
                 REQUETE_LISTE_APPLICATIONS => requete_get_liste_applications(middleware, message, gestionnaire).await,
+                REQUETE_APPLICATION => requete_get_application(middleware, message, gestionnaire).await,
                 _ => {
                     error!("Message requete/action inconnue : '{}'. Message dropped.", message.action);
                     Ok(None)
@@ -97,6 +98,34 @@ async fn requete_get_liste_applications<M>(middleware: &M, m: MessageValideActio
 
     let reponse = json!({ "applications": applications });
     Ok(Some(middleware.formatter_reponse(&reponse, None)?))
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct RequeteGetApplication {
+    application_id: String,
+}
+
+async fn requete_get_application<M>(middleware: &M, m: MessageValideAction, gestionnaire: &GestionnaireLanding)
+    -> Result<Option<MessageMilleGrille>, Box<dyn Error>>
+    where M: GenerateurMessages + MongoDao + VerificateurMessage,
+{
+    debug!("requete_get_application Message : {:?}", & m.message);
+    let requete: RequeteGetApplication = m.message.get_msg().map_contenu(None)?;
+
+    let user_id = match m.get_user_id() {
+        Some(u) => u,
+        None => return Ok(Some(middleware.formatter_reponse(json!({"ok": false, "msg": "Access denied"}), None)?))
+    };
+
+    let filtre = doc! { CHAMP_APPLICATION_ID: &requete.application_id, CHAMP_USER_ID: &user_id };
+    let collection = middleware.get_collection(NOM_COLLECTION_APPLICATIONS)?;
+    let doc_application = collection.find_one(filtre, None).await?;
+    if let Some(d) = doc_application {
+        let app: DocApplication = convertir_bson_deserializable(d)?;
+        Ok(Some(middleware.formatter_reponse(&app, None)?))
+    } else {
+        Ok(Some(middleware.formatter_reponse(&json!({"ok": false, "err": "Application inconnue"}), None)?))
+    }
 }
 
 // #[derive(Clone, Debug, Serialize, Deserialize)]

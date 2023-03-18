@@ -44,6 +44,7 @@ pub async fn consommer_commande<M>(middleware: &M, m: MessageValideAction, gesti
 
         // Transactions
         TRANSACTION_CREER_NOUVELLE_APPLICATION => commande_creer_nouvelle_application(middleware, m, gestionnaire).await,
+        TRANSACTION_SAUVEGARDER_APPLICATION => commande_sauvegarder_application(middleware, m, gestionnaire).await,
 
         // Commandes inconnues
         _ => Err(format!("core_backup.consommer_commande: Commande {} inconnue : {}, message dropped", DOMAINE_NOM, m.action))?,
@@ -56,6 +57,32 @@ async fn commande_creer_nouvelle_application<M>(middleware: &M, m: MessageValide
 {
     debug!("commande_creer_nouvelle_application Consommer commande : {:?}", & m.message);
     let commande: TransactionCreerNouvelleApplication = m.message.get_msg().map_contenu(None)?;
+
+    let user_id = match m.get_user_id() {
+        Some(inner) => inner,
+        None => Err(format!("commande_creer_nouvelle_application User_id absent du certificat"))?
+    };
+
+    // Autorisation: Action usager avec compte prive ou delegation globale
+    let role_prive = m.verifier_roles(vec![RolesCertificats::ComptePrive]);
+    if role_prive {
+        // Ok
+    } else if m.verifier_delegation_globale(DELEGATION_GLOBALE_PROPRIETAIRE) {
+        // Ok
+    } else {
+        Err(format!("commandes.commande_creer_nouvelle_application: Commande autorisation invalide pour message {:?}", m.correlation_id))?
+    }
+
+    // Traiter la transaction
+    Ok(sauvegarder_traiter_transaction(middleware, m, gestionnaire).await?)
+}
+
+async fn commande_sauvegarder_application<M>(middleware: &M, m: MessageValideAction, gestionnaire: &GestionnaireLanding)
+    -> Result<Option<MessageMilleGrille>, Box<dyn Error>>
+    where M: GenerateurMessages + MongoDao + ValidateurX509
+{
+    debug!("commande_sauvegarder_application Consommer commande : {:?}", & m.message);
+    let commande: TransactionSauvegarderApplication = m.message.get_msg().map_contenu(None)?;
 
     let user_id = match m.get_user_id() {
         Some(inner) => inner,
