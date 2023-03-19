@@ -2,7 +2,7 @@
 
 REPO=docker.maceroc.com
 # DOCKERHUB_REPO=dugremat
-NAME=millegrilles_documents_backend
+NAME=millegrilles_landing_backend
 BRANCH=`git rev-parse --abbrev-ref HEAD`
 ARCH_SUPPORTEES=( x86_64 aarch64 )
 BUILD=`cat build.txt`
