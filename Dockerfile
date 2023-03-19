@@ -15,6 +15,6 @@ ENV APP_FOLDER=/usr/src/app \
 
 WORKDIR $APP_FOLDER
 
-COPY target/release/millegrilles_documents .
+COPY target/release/millegrilles_landing .
 
 CMD ./millegrilles_documents
