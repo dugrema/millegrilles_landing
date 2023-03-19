@@ -112,12 +112,14 @@ async fn requete_get_application<M>(middleware: &M, m: MessageValideAction, gest
     debug!("requete_get_application Message : {:?}", & m.message);
     let requete: RequeteGetApplication = m.message.get_msg().map_contenu(None)?;
 
-    let user_id = match m.get_user_id() {
-        Some(u) => u,
-        None => return Ok(Some(middleware.formatter_reponse(json!({"ok": false, "msg": "Access denied"}), None)?))
+    let filtre = match m.get_user_id() {
+        Some(u) => doc! { CHAMP_APPLICATION_ID: &requete.application_id, CHAMP_USER_ID: u },
+        None => match m.verifier_exchanges(vec![Securite::L2Prive, Securite::L3Protege]) {
+            true => doc! { CHAMP_APPLICATION_ID: &requete.application_id },
+            false => return Ok(Some(middleware.formatter_reponse(json!({"ok": false, "msg": "Access denied"}), None)?))
+        }
     };
 
-    let filtre = doc! { CHAMP_APPLICATION_ID: &requete.application_id, CHAMP_USER_ID: &user_id };
     let collection = middleware.get_collection(NOM_COLLECTION_APPLICATIONS)?;
     let doc_application = collection.find_one(filtre, None).await?;
     if let Some(d) = doc_application {
