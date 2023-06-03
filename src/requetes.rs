@@ -65,7 +65,7 @@ async fn requete_get_liste_applications<M>(middleware: &M, m: MessageValideActio
     where M: GenerateurMessages + MongoDao + VerificateurMessage,
 {
     debug!("requete_get_liste_applications Message : {:?}", & m.message);
-    let requete: RequeteGetListeApplications = m.message.get_msg().map_contenu(None)?;
+    let requete: RequeteGetListeApplications = m.message.get_msg().map_contenu()?;
 
     let user_id = match m.get_user_id() {
         Some(u) => u,
@@ -110,7 +110,7 @@ async fn requete_get_application<M>(middleware: &M, m: MessageValideAction, gest
     where M: GenerateurMessages + MongoDao + VerificateurMessage,
 {
     debug!("requete_get_application Message : {:?}", & m.message);
-    let requete: RequeteGetApplication = m.message.get_msg().map_contenu(None)?;
+    let requete: RequeteGetApplication = m.message.get_msg().map_contenu()?;
 
     let filtre = match m.get_user_id() {
         Some(u) => doc! { CHAMP_APPLICATION_ID: &requete.application_id, CHAMP_USER_ID: u },

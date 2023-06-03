@@ -53,10 +53,10 @@ pub async fn consommer_commande<M>(middleware: &M, m: MessageValideAction, gesti
 
 async fn commande_creer_nouvelle_application<M>(middleware: &M, m: MessageValideAction, gestionnaire: &GestionnaireLanding)
     -> Result<Option<MessageMilleGrille>, Box<dyn Error>>
-    where M: GenerateurMessages + MongoDao + ValidateurX509
+    where M: GenerateurMessages + MongoDao + ValidateurX509 + VerificateurMessage
 {
     debug!("commande_creer_nouvelle_application Consommer commande : {:?}", & m.message);
-    let commande: TransactionCreerNouvelleApplication = m.message.get_msg().map_contenu(None)?;
+    let commande: TransactionCreerNouvelleApplication = m.message.get_msg().map_contenu()?;
 
     let user_id = match m.get_user_id() {
         Some(inner) => inner,
@@ -79,10 +79,10 @@ async fn commande_creer_nouvelle_application<M>(middleware: &M, m: MessageValide
 
 async fn commande_sauvegarder_application<M>(middleware: &M, m: MessageValideAction, gestionnaire: &GestionnaireLanding)
     -> Result<Option<MessageMilleGrille>, Box<dyn Error>>
-    where M: GenerateurMessages + MongoDao + ValidateurX509
+    where M: GenerateurMessages + MongoDao + ValidateurX509 + VerificateurMessage
 {
     debug!("commande_sauvegarder_application Consommer commande : {:?}", & m.message);
-    let commande: TransactionSauvegarderApplication = m.message.get_msg().map_contenu(None)?;
+    let commande: TransactionSauvegarderApplication = m.message.get_msg().map_contenu()?;
 
     let user_id = match m.get_user_id() {
         Some(inner) => inner,

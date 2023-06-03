@@ -13,6 +13,7 @@ use millegrilles_common_rust::mongodb::options::{FindOneAndUpdateOptions, Return
 use millegrilles_common_rust::recepteur_messages::MessageValideAction;
 use millegrilles_common_rust::serde_json::json;
 use millegrilles_common_rust::transactions::Transaction;
+use millegrilles_common_rust::verificateur::VerificateurMessage;
 
 use crate::common::*;
 use crate::constantes::*;
@@ -24,20 +25,23 @@ pub async fn aiguillage_transaction<M, T>(gestionnaire: &GestionnaireLanding, mi
         M: ValidateurX509 + GenerateurMessages + MongoDao,
         T: Transaction
 {
-    match transaction.get_action() {
+    let action = match transaction.get_routage().action.as_ref() {
+        Some(inner) => inner.as_str(),
+        None => Err(format!("transactions.aiguillage_transaction: Transaction {} n'a pas de type d'action", transaction.get_uuid_transaction()))?
+    };
+
+    match action {
         TRANSACTION_CREER_NOUVELLE_APPLICATION => transaction_creer_nouvelle_application(gestionnaire, middleware, transaction).await,
         TRANSACTION_SAUVEGARDER_APPLICATION => transaction_sauvegarder_application(gestionnaire, middleware, transaction).await,
-        _ => Err(format!("transactions.aiguillage_transaction: Transaction {} est de type non gere : {}", transaction.get_uuid_transaction(), transaction.get_action())),
+        _ => Err(format!("transactions.aiguillage_transaction: Transaction {} est de type non gere : {}", transaction.get_uuid_transaction(), action)),
     }
 }
 
 pub async fn consommer_transaction<M>(middleware: &M, m: MessageValideAction, gestionnaire: &GestionnaireLanding)
     -> Result<Option<MessageMilleGrille>, Box<dyn Error>>
 where
-    M: ValidateurX509 + GenerateurMessages + MongoDao,
+    M: ValidateurX509 + GenerateurMessages + MongoDao + VerificateurMessage
 {
-    debug!("transactions.consommer_transaction Consommer transaction : {:?}", &m.message);
-
     // Autorisation
     match m.action.as_str() {
         // 4.secure - doivent etre validees par une commande
