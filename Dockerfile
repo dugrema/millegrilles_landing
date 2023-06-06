@@ -17,4 +17,4 @@ WORKDIR $APP_FOLDER
 
 COPY target/release/millegrilles_landing .
 
-CMD ./millegrilles_documents
+CMD ./millegrilles_landing
